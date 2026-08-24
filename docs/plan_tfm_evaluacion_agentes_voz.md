@@ -57,16 +57,16 @@ Que arquitectura abierta ofrece el mejor equilibrio entre calidad conversacional
 ### Preguntas secundarias
 
 - Que diferencias existen entre las soluciones Speech-to-Speech nativas y los pipelines STT-LLM-TTS?
-- Que plataforma responde antes despues de que el usuario termina de hablar?
-- Como gestionan las plataformas las interrupciones y los cambios de turno?
+- Que arquitectura responde antes despues de que el usuario termina de hablar?
+- Como gestionan las diferentes arquitecturas las interrupciones y los cambios de turno?
 - Que impacto tiene la calidad de STT en la respuesta final del agente?
-- Como cambia el coste cuando aumentan la duracion y el numero de conversaciones?
-- Que proveedor ofrece mejores mecanismos de observabilidad, control y recuperacion ante errores?
-- Hasta que punto una solucion local puede ofrecer resultados comparables?
+- Que coste de hardware y mantenimiento requiere cada pipeline open source?
+- Que arquitectura ofrece mejores mecanismos de observabilidad, control y recuperacion ante errores?
+- Hasta que punto un modelo S2S abierto puede ofrecer resultados comparables al pipeline modular?
 
 ## 6. Modelos y tecnologias candidatas
 
-La seleccion definitiva debe hacerse antes de implementar la fase experimental y debe registrarse con la fecha de consulta de sus precios y condiciones.
+La seleccion definitiva debe hacerse antes de implementar la fase experimental y debe registrarse con la fecha de consulta, version, licencia, requisitos de hardware y condiciones de uso de cada modelo.
 
 ### Tecnologias comerciales como contexto
 
@@ -173,17 +173,17 @@ Evaluar mediante una encuesta controlada:
 
 Se puede utilizar una escala Likert de 1 a 5 y calcular media, mediana e intervalo de confianza cuando el numero de participantes lo permita.
 
-### 7.5 Coste
+### 7.5 Coste y recursos
 
-Registrar:
+Para los pipelines open source se registrara:
 
-- Coste por minuto de audio.
-- Coste por tokens de entrada y salida, si aplica.
-- Coste de STT y TTS cuando sean servicios separados.
-- Coste de transporte, sesiones o infraestructura.
-- Coste estimado para 10, 100 y 1.000 conversaciones mensuales.
+- Memoria RAM y memoria de GPU utilizadas.
+- Tiempo de CPU y GPU por conversacion.
+- Requisitos de hardware para ejecutar cada modelo.
+- Coste estimado del hardware, electricidad y mantenimiento.
+- Tiempo de instalacion y configuracion.
 
-Los precios deben anotarse con moneda, plan, fecha de consulta y URL de la documentacion oficial. No se deben mezclar precios de planes diferentes.
+Para las plataformas comerciales se documentara solo de forma teorica el coste por minuto, tokens, audio o sesiones, segun corresponda. Los precios se anotaran con moneda, plan, fecha de consulta y URL de la documentacion oficial. No se utilizaran para construir los resultados experimentales principales.
 
 ### 7.6 Operacion y privacidad
 
@@ -251,12 +251,13 @@ Los precios deben anotarse con moneda, plan, fecha de consulta y URL de la docum
 - `numpy` para inspeccion basica de senales de audio.
 - Silero VAD para deteccion de turnos en la linea base local.
 
-### Proveedores comerciales
+### Modelos y herramientas open source
 
-- SDK oficial de cada proveedor cuando exista.
-- LiveKit Agents si permite mantener un adaptador comun.
-- WebSocket o WebRTC segun la interfaz realtime de cada plataforma.
-- Variables de entorno separadas por proveedor.
+- `faster-whisper` o `whisper.cpp` para STT.
+- Ollama con un modelo LLM abierto para el pipeline modular.
+- Piper o Kokoro para TTS.
+- Moshi, Qwen2.5-Omni u otro modelo abierto para S2S nativo.
+- Pipecat, LiveKit Agents o Python asincrono para la orquestacion.
 
 No se deben mezclar implementaciones especificas de un proveedor en el nucleo de la evaluacion. El nucleo debe trabajar con una interfaz comun, por ejemplo:
 
@@ -295,11 +296,8 @@ Notebook de experimentacion
         v
 Interfaz comun VoiceAgentAdapter
         |
-        +--> Adaptador OpenAI Realtime
-        +--> Adaptador Gemini Live
-        +--> Adaptador ElevenLabs
-        +--> Adaptador Azure o Deepgram
-        +--> Adaptador pipeline local
+        +--> Adaptador pipeline STT-LLM-TTS local
+        +--> Adaptador modelo S2S abierto
         |
         v
 Captura de eventos y metricas
@@ -337,7 +335,7 @@ Cada ejecucion debe producir un registro con:
 
 ### Fase 2: Definicion del protocolo
 
-- Seleccionar tres plataformas comerciales como minimo.
+- Seleccionar como minimo un pipeline modular y un candidato S2S abierto.
 - Fijar tareas, frases y condiciones de prueba.
 - Definir metricas y criterios de exito.
 - Diseñar el esquema de datos de las mediciones.
@@ -353,18 +351,18 @@ Cada ejecucion debe producir un registro con:
 
 **Resultado:** infraestructura reproducible.
 
-### Fase 4: Implementacion de agentes
+### Fase 4: Implementacion de arquitecturas
 
-- Integrar las plataformas comerciales seleccionadas.
-- Mantener instrucciones equivalentes.
-- Implementar la linea base local.
-- Verificar que todos los adaptadores cumplen el mismo contrato.
+- Implementar o consolidar el pipeline local `faster-whisper -> Ollama -> Piper/Kokoro`.
+- Integrar el modelo S2S abierto que supere la fase de viabilidad.
+- Mantener instrucciones y tareas equivalentes cuando la arquitectura lo permita.
+- Verificar que las dos implementaciones cumplen el mismo contrato de evaluacion.
 
 **Resultado:** agentes ejecutables bajo el mismo protocolo.
 
 ### Fase 5: Pruebas piloto
 
-- Ejecutar pocas pruebas por plataforma.
+- Ejecutar pocas pruebas por arquitectura.
 - Detectar problemas de audio, permisos, limites o reconexion.
 - Ajustar el protocolo sin cambiar las metricas principales.
 - Documentar cualquier cambio.
@@ -383,10 +381,10 @@ Cada ejecucion debe producir un registro con:
 ### Fase 7: Analisis
 
 - Calcular estadisticos descriptivos.
-- Comparar plataformas por metrica.
+- Comparar arquitecturas por metrica.
 - Analizar casos de fallo.
 - Separar resultados objetivos de opiniones subjetivas.
-- Estudiar compromisos entre calidad, latencia, coste y privacidad.
+- Estudiar compromisos entre calidad, latencia, consumo, reproducibilidad y privacidad.
 
 **Resultado:** tablas, graficos y conclusiones.
 
@@ -404,11 +402,11 @@ Cada ejecucion debe producir un registro con:
 
 El TFM se considerara completo si:
 
-- Se comparan al menos tres plataformas comerciales bajo condiciones equivalentes.
+- Se comparan al menos un pipeline STT-LLM-TTS y un pipeline S2S open source bajo condiciones equivalentes.
 - Existe una interfaz comun o un procedimiento comun de ejecucion.
-- Cada resultado incluye latencia, calidad, coste y condiciones de la prueba.
+- Cada resultado incluye latencia, calidad, consumo y condiciones de la prueba.
 - Se reportan media, mediana y percentil 95 de las latencias.
-- Se mide al menos una metrica de reconocimiento y una de calidad conversacional.
+- Se mide al menos una metrica de reconocimiento para el pipeline modular y una metrica de calidad conversacional para ambas arquitecturas.
 - Se prueban las interrupciones y los errores de conexion.
 - Se incluye una discusion de privacidad, licencias y dependencia del proveedor.
 - Se documentan versiones, fecha de consulta y limitaciones.
@@ -419,7 +417,7 @@ El TFM se considerara completo si:
 | Riesgo | Mitigacion |
 |---|---|
 | Cambios de API o precios | Registrar fecha, version y configuracion; conservar resultados brutos |
-| Coste elevado de las pruebas | Limitar pruebas piloto, usar presupuestos y estimar antes el volumen |
+| Coste de servicios comerciales | Mantenerlos en el marco teorico y realizar la evaluacion principal con modelos open source |
 | Diferencias entre arquitecturas | Clasificar S2S nativo y pipeline por separado |
 | Dependencia de la red | Medir condiciones de red o declarar la limitacion |
 | Pocas muestras subjetivas | Usar rubrica clara y separar resultados exploratorios |
@@ -433,7 +431,7 @@ El TFM se considerara completo si:
 1. Memoria del TFM.
 2. Documento del protocolo experimental.
 3. Notebook de demostracion y analisis.
-4. Adaptadores de las plataformas seleccionadas.
+4. Adaptadores de las arquitecturas seleccionadas.
 5. Linea base local reproducible.
 6. Datos anonimizados de las mediciones.
 7. Graficos y tablas finales.

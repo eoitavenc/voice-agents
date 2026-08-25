@@ -2,28 +2,71 @@
 
 ## 1. Idea principal
 
-El TFM estudiara y comparara dos arquitecturas para crear agentes de voz conversacionales:
+El TFM estudiara y comparara tres arquitecturas para crear agentes de voz conversacionales:
 
 1. Un pipeline `Speech-to-Text-to-Speech` compuesto por STT, LLM y TTS independientes.
-2. Un agente `Speech-to-Speech` basado en un modelo abierto que reciba y genere audio.
+2. Una variante del pipeline anterior con un modelo Transformer cargado directamente desde Hugging Face.
+3. Un agente `Speech-to-Speech` basado en un modelo abierto que reciba y genere audio.
 
 La comparativa se realizara utilizando modelos y herramientas open source o con pesos disponibles para investigacion. El objetivo sera analizar que arquitectura ofrece el mejor equilibrio entre calidad, latencia, estabilidad, privacidad, consumo de recursos y facilidad de integracion.
 
 Ya se ha probado una primera version local del pipeline `Speech-to-Text-to-Speech` con `faster-whisper`, Ollama y Piper. Esta implementacion servira como linea base del estudio. El siguiente paso sera seleccionar e integrar una alternativa `Speech-to-Speech` abierta bajo condiciones comparables.
 
+Como nueva arquitectura experimental se establece un pipeline modular ejecutado mediante un orquestador sencillo en Python:
+
+```text
+Whisper / faster-whisper (STT)
+        -> modelo Transformer instruct (LLM)
+        -> F5-TTS o Fish Speech (TTS)
+```
+
+Esta arquitectura se evaluara inicialmente por turnos. El audio se convertira en texto, el LLM generara una respuesta y el TTS producira el audio de salida. La modularidad permite sustituir cada etapa y medir sus latencias y errores de forma independiente. F5-TTS y Fish Speech seran alternativas de TTS, no componentes simultaneos del mismo pipeline.
+
 ## 2. Arquitecturas objeto de comparacion
 
-### 2.1 Pipeline Speech-to-Text-to-Speech
+### 2.1 Pipeline modular con Ollama
 
-Esta es la arquitectura local que ya se ha probado:
+Esta es la arquitectura local que ya se ha probado en `Ollama_Local_Agent.ipynb`:
 
 ```text
 Microfono -> Silero VAD -> faster-whisper -> Ollama -> Piper/Kokoro -> altavoces
 ```
 
+El orquestador Python envia los mensajes a la API local de Ollama, normalmente en `http://127.0.0.1:11434`. Ollama se encarga de servir el modelo y abstrae parte de la carga, la gestion de memoria y la comunicacion con el LLM.
+
+Componentes:
+
+| Etapa | Componente | Funcion |
+|---|---|---|
+| Deteccion de voz | Silero VAD | Separa voz y silencio |
+| STT | `faster-whisper` | Convierte audio en texto |
+| LLM | Ollama + Qwen, Llama o Mistral | Genera la respuesta mediante API HTTP |
+| TTS | Piper o Kokoro | Convierte la respuesta en audio |
+| Orquestacion | Python | Conserva el historial y coordina el turno |
+
+Ventajas principales: instalacion sencilla, proceso del modelo separado, cambio rapido de modelos y API estable. Inconvenientes: menor control directo sobre PyTorch, dependencia del servicio local de Ollama y menor visibilidad sobre algunos detalles de la inferencia.
+
 Cada etapa puede sustituirse de forma independiente y permite medir por separado la transcripcion, la generacion y la sintesis.
 
-### 2.2 Speech-to-Speech nativo
+### 2.2 Pipeline modular con Transformers
+
+Esta es la arquitectura experimental que se implementara en `Transformers_Local_Voice_Agent.ipynb`:
+
+```text
+Microfono -> Whisper / faster-whisper -> modelo Transformer instruct -> F5-TTS o Fish Speech -> altavoces
+```
+
+El orquestador sera Python y conectara las etapas por turnos. El STT convertira el audio en texto, el modelo Transformer generara la respuesta y el TTS la convertira de nuevo en audio. Como primera prueba se puede utilizar Piper, ya disponible en el proyecto, para validar el LLM sin añadir la complejidad de F5-TTS o Fish Speech.
+
+Los candidatos para el LLM son `Qwen/Qwen2.5-7B-Instruct`, `meta-llama/Llama-3.1-8B-Instruct`, `google/gemma-2-9b-it` y `mistralai/Mistral-7B-Instruct-v0.3`. Se comenzara con `Qwen/Qwen2.5-3B-Instruct` si la memoria del equipo no permite ejecutar los modelos mayores.
+
+Los candidatos para TTS son F5-TTS y Fish Speech. Se evaluaran como backends alternativos, no simultaneamente. Piper se conservara como linea base practica porque ya existe una voz española local en `models/piper/`.
+
+Esta arquitectura permite controlar directamente el tokenizer, el dispositivo, la cuantizacion, los parametros de generacion y las metricas de PyTorch. Sin embargo, Transformers y Ollama son runtimes diferentes: para atribuir una diferencia al runtime hay que utilizar el mismo modelo, cuantizacion, prompt, hardware y parametros de generacion.
+
+La primera fase sera por turnos y con archivos o buffers WAV. El streaming, el VAD en tiempo real y las interrupciones se incorporaran despues de validar cada componente por separado.
+
+### 2.3 Speech-to-Speech nativo
 
 El modelo recibe audio y genera audio directamente:
 
@@ -35,14 +78,14 @@ Esta sera la arquitectura que se intentara seleccionar entre modelos abiertos co
 
 ## 3. Objetivo general
 
-Diseñar y aplicar una metodologia reproducible para comparar un pipeline local Speech-to-Text-to-Speech con un agente Speech-to-Speech basado en modelos abiertos, en un escenario comun de conversacion en espanol.
+Diseñar y aplicar una metodologia reproducible para comparar una linea base local con Ollama, una variante modular con Transformers y TTS alternativos, y un agente Speech-to-Speech basado en modelos abiertos, en un escenario comun de conversacion en espanol.
 
 ## 4. Objetivos especificos
 
 1. Revisar las plataformas comerciales realtime como contexto del estado del arte.
-2. Seleccionar modelos abiertos para las arquitecturas STT-LLM-TTS y S2S.
-3. Definir una arquitectura y un conjunto de tareas iguales para ambas alternativas.
-4. Implementar un cliente o adaptador comun para cada arquitectura.
+2. Seleccionar modelos abiertos para las arquitecturas STT-LLM-TTS, Transformers y S2S.
+3. Definir una arquitectura y un conjunto de tareas iguales para las tres alternativas.
+4. Implementar un cliente o adaptador comun para cada arquitectura y backend.
 5. Medir objetivamente latencia, calidad, estabilidad y consumo.
 6. Evaluar subjetivamente la naturalidad y la experiencia conversacional.
 7. Analizar privacidad, licencias y requisitos de despliegue.
@@ -85,6 +128,25 @@ Silero VAD -> faster-whisper -> Ollama -> Piper o Kokoro
 ```
 
 Esta linea base no debe presentarse como Speech-to-Speech nativo. Su funcion sera servir como referencia de coste, privacidad, control y rendimiento local.
+
+### Modelos para comparar Ollama y Transformers
+
+La comparacion se realizara en dos niveles:
+
+1. **Comparacion del runtime**: mismo modelo, por ejemplo Qwen2.5 3B, ejecutado mediante Ollama y mediante `transformers`.
+2. **Comparacion de modelos**: diferentes familias o tamaños ejecutados con el mismo runtime, registrando por separado el efecto del modelo.
+
+Los candidatos iniciales son:
+
+| Modelo | Ollama | Transformers | Observacion |
+|---|---|---|---|
+| Qwen2.5 3B Instruct | `qwen2.5:3b` | `Qwen/Qwen2.5-3B-Instruct` | Primera prueba y comparación más asequible |
+| Qwen2.5 7B Instruct | Etiqueta compatible disponible | `Qwen/Qwen2.5-7B-Instruct` | Candidato multilingue; requiere más memoria |
+| Llama 3.1 8B Instruct | Etiqueta compatible disponible | `meta-llama/Llama-3.1-8B-Instruct` | Referencia habitual en investigación |
+| Gemma 2 9B Instruct | Etiqueta compatible disponible | `google/gemma-2-9b-it` | Candidato de mayor tamaño |
+| Mistral 7B Instruct | Etiqueta compatible disponible | `mistralai/Mistral-7B-Instruct-v0.3` | Referencia ligera y conocida |
+
+Las etiquetas de Ollama dependen de los modelos publicados y de la version instalada. Se anotaran el nombre exacto, la cuantizacion y la revision utilizada en cada ejecucion.
 
 ### Modelos abiertos para Speech-to-Speech
 

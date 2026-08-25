@@ -79,6 +79,7 @@ Abre VS Code o Jupyter y selecciona el kernel `Python (VoiceAgents)`. Después e
 
 - `Version_online_agente_voz.ipynb` para la versión online.
 - `Ollama_Local_Agent.ipynb` para la versión local con Ollama.
+- `Transformers_Local_Voice_Agent.ipynb` para la versión local con Transformers.
 
 Antes de ejecutar la versión local, comprueba que Ollama está instalado y que tienes descargado el modelo indicado en las celdas del notebook. El micrófono debe estar disponible para Python y para el navegador si el flujo utiliza Jupyter o LiveKit.
 

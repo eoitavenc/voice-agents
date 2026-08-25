@@ -26,7 +26,7 @@ Esta arquitectura se evaluara inicialmente por turnos. El audio se convertira en
 
 ### 2.1 Pipeline modular con Ollama
 
-Esta es la arquitectura local que ya se ha probado en `Ollama_Local_Agent.ipynb`:
+Esta es la arquitectura local que ya se ha probado en `speech-to-text-to-speech/Ollama_Local_Agent.ipynb`:
 
 ```text
 Microfono -> Silero VAD -> faster-whisper -> Ollama -> Piper/Kokoro -> altavoces
@@ -50,7 +50,7 @@ Cada etapa puede sustituirse de forma independiente y permite medir por separado
 
 ### 2.2 Pipeline modular con Transformers
 
-Esta es la arquitectura experimental que se implementara en `Transformers_Local_Voice_Agent.ipynb`:
+Esta es la arquitectura experimental que se implementara en `speech-to-text-to-speech/Transformers_Local_Voice_Agent.ipynb`:
 
 ```text
 Microfono -> Whisper / faster-whisper -> modelo Transformer instruct -> F5-TTS o Fish Speech -> altavoces

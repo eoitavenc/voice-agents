@@ -77,9 +77,9 @@ El archivo `.onnx` ocupa aproximadamente 60 MB. Si no se incluye en el repositor
 
 Abre VS Code o Jupyter y selecciona el kernel `Python (VoiceAgents)`. Después ejecuta:
 
-- `Version_online_agente_voz.ipynb` para la versión online.
-- `Ollama_Local_Agent.ipynb` para la versión local con Ollama.
-- `Transformers_Local_Voice_Agent.ipynb` para la versión local con Transformers.
+- `speech-to-text-to-speech/Version_online_agente_voz.ipynb` para la versión online.
+- `speech-to-text-to-speech/Ollama_Local_Agent.ipynb` para la versión local con Ollama.
+- `speech-to-text-to-speech/Transformers_Local_Voice_Agent.ipynb` para la versión local con Transformers.
 
 Antes de ejecutar la versión local, comprueba que Ollama está instalado y que tienes descargado el modelo indicado en las celdas del notebook. El micrófono debe estar disponible para Python y para el navegador si el flujo utiliza Jupyter o LiveKit.
 
@@ -91,8 +91,7 @@ VoiceAgents/
 ├── models/piper/                 Modelo y configuración de Piper
 ├── models/audio/                 Audios de prueba o resultados generados
 ├── testing/                      Matriz de pruebas de modelos y runtimes
-├── Ollama_Local_Agent.ipynb      Agente local
-├── Version_online_agente_voz.ipynb  Agente online
+├── speech-to-text-to-speech/     Notebooks del pipeline de voz
 └── README.md
 ```
 

@@ -2,7 +2,7 @@
 
 ## 1. Que hace Lesson 4
 
-`Version_online_agente_voz.ipynb` construye un agente conversacional de voz en tiempo real. El usuario habla desde el navegador y recibe una respuesta hablada.
+`speech-to-text-to-speech/Version_online_agente_voz.ipynb` construye un agente conversacional de voz en tiempo real. El usuario habla desde el navegador y recibe una respuesta hablada.
 
 El flujo general es:
 

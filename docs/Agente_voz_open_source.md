@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Esta guia describe como construir un agente de voz equivalente al de `Version_online_agente_voz.ipynb`, pero utilizando componentes de codigo abierto y modelos ejecutados localmente.
+Esta guia describe como construir un agente de voz equivalente al de `speech-to-text-to-speech/Version_online_agente_voz.ipynb`, pero utilizando componentes de codigo abierto y modelos ejecutados localmente.
 
 La arquitectura propuesta es:
 

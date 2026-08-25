@@ -4,7 +4,7 @@
 
 Crear un notebook independiente para evaluar un agente de voz en tiempo real. El agente debe recibir audio, mantener una conversacion y devolver audio con la menor latencia posible.
 
-Este proyecto sera independiente de `Version_online_agente_voz.ipynb` y `Ollama_Local_Agent.ipynb`.
+Este proyecto sera independiente de `speech-to-text-to-speech/Version_online_agente_voz.ipynb` y `speech-to-text-to-speech/Ollama_Local_Agent.ipynb`.
 
 ## 2. Dos arquitecturas posibles
 

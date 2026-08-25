@@ -37,7 +37,7 @@ La arquitectura es open source en el sentido de que utiliza codigo y modelos pub
 
 Este documento propone una segunda implementacion local del agente de voz utilizando directamente modelos de Hugging Face y la libreria `transformers`.
 
-La implementacion se plantea como alternativa experimental a `Ollama_Local_Agent.ipynb`. El notebook comparara Transformers y Ollama dentro de la misma cadena de voz:
+La implementacion se plantea como alternativa experimental a `speech-to-text-to-speech/Ollama_Local_Agent.ipynb`. El notebook comparara Transformers y Ollama dentro de la misma cadena de voz:
 
 ```text
 Microfono -> STT -> LLM -> TTS -> Altavoces

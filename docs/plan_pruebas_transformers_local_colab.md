@@ -334,8 +334,8 @@ Esta hipotesis debe confirmarse con los datos obtenidos, no presentarse como con
 
 ## 9. Recomendacion final de trabajo
 
-1. Mantener `Ollama_Local_Agent.ipynb` como linea base local.
-2. Mantener `Transformers_Local_Voice_Agent.ipynb` como notebook de investigacion.
+1. Mantener `speech-to-text-to-speech/Ollama_Local_Agent.ipynb` como linea base local.
+2. Mantener `speech-to-text-to-speech/Transformers_Local_Voice_Agent.ipynb` como notebook de investigacion.
 3. Crear una variante Colab que utilice GPU, cuantizacion y Gradio para el microfono.
 4. Usar Qwen2.5 3B como comparacion principal.
 5. Usar Qwen2.5 7B como prueba de mayor calidad en Colab.

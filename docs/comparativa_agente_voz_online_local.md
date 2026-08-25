@@ -2,7 +2,7 @@
 
 ## 1. Alcance
 
-Este documento compara dos formas de construir un agente de voz: la version online documentada en `Version_online_agente_voz.ipynb` y una alternativa local.
+Este documento compara dos formas de construir un agente de voz: la version online documentada en `speech-to-text-to-speech/Version_online_agente_voz.ipynb` y una alternativa local.
 
 - **Version online**: usa servicios externos como OpenAI, ElevenLabs y LiveKit Cloud.
 - **Version local**: ejecuta el procesamiento en el equipo utilizando modelos y librerias open source.

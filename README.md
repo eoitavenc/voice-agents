@@ -90,6 +90,7 @@ VoiceAgents/
 ├── Docs/                         Documentación del proyecto
 ├── models/piper/                 Modelo y configuración de Piper
 ├── models/audio/                 Audios de prueba o resultados generados
+├── testing/                      Matriz de pruebas de modelos y runtimes
 ├── Ollama_Local_Agent.ipynb      Agente local
 ├── Version_online_agente_voz.ipynb  Agente online
 └── README.md

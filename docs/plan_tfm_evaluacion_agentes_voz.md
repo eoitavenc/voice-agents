@@ -10,7 +10,7 @@ El TFM estudiara y comparara tres arquitecturas para crear agentes de voz conver
 
 La comparativa se realizara utilizando modelos y herramientas open source o con pesos disponibles para investigacion. El objetivo sera analizar que arquitectura ofrece el mejor equilibrio entre calidad, latencia, estabilidad, privacidad, consumo de recursos y facilidad de integracion.
 
-Ya se ha probado una primera version local del pipeline `Speech-to-Text-to-Speech` con `faster-whisper`, Ollama y Piper. Esta implementacion servira como linea base del estudio. El siguiente paso sera seleccionar e integrar una alternativa `Speech-to-Speech` abierta bajo condiciones comparables.
+Ya se ha probado una primera version local del pipeline `Speech-to-Text-to-Speech` con `faster-whisper`, Ollama y Piper. Esta implementacion servira como linea base del estudio. El siguiente paso sera seleccionar e integrar candidatos de audio conversacional bajo condiciones comparables.
 
 Como nueva arquitectura experimental se establece un pipeline modular ejecutado mediante un orquestador sencillo en Python:
 
@@ -66,24 +66,40 @@ Esta arquitectura permite controlar directamente el tokenizer, el dispositivo, l
 
 La primera fase sera por turnos y con archivos o buffers WAV. El streaming, el VAD en tiempo real y las interrupciones se incorporaran despues de validar cada componente por separado.
 
-### 2.3 Speech-to-Speech nativo
+### 2.3 Candidatos de audio conversacional
 
-El modelo recibe audio y genera audio directamente:
+Esta categoria se investigara para determinar si el modelo recibe audio y genera audio directamente, o si en realidad necesita texto como entrada. El criterio debe comprobarse en la version exacta utilizada, porque un modelo TTS o text-to-audio no es automaticamente un modelo Speech-to-Speech nativo.
 
 ```text
-Microfono -> transporte realtime -> modelo audio-audio -> altavoces
+Microfono -> transporte o interfaz -> modelo de audio -> altavoces
 ```
 
-Esta sera la arquitectura que se intentara seleccionar entre modelos abiertos como Moshi, Qwen2.5-Omni u otro candidato compatible con el hardware y el espanol.
+Los candidatos iniciales son:
+
+- **Fish Speech S2 Pro**: candidato de audio conversacional y TTS multilingue. Debe verificarse si la version seleccionada admite audio de usuario como entrada conversacional, o si funciona como TTS condicionado por texto.
+- **Dia**: candidato para generacion de dialogo hablado. Debe verificarse el formato de entrada, porque la disponibilidad de audio-audio directo, soporte de español y funcionamiento en streaming pueden depender de la implementacion concreta.
+
+No se afirmara a priori que estos sean los unicos modelos S2S open source ni que ambos realicen conversión directa audio-audio. El plan registrara para cada candidato si cumple realmente estas condiciones:
+
+| Criterio | Comprobacion |
+|---|---|
+| Entrada de audio | Acepta voz del usuario sin transcripcion externa |
+| Salida de audio | Genera voz como respuesta sin TTS externo |
+| Conversacion | Mantiene turnos y contexto conversacional |
+| Español | Tiene soporte documentado y resultados aceptables |
+| Tiempo real | Permite streaming, baja latencia o generacion incremental |
+| Licencia | Codigo, pesos, codecs y auxiliares son compatibles con el estudio |
+
+Si un modelo falla la comprobacion de entrada audio-audio, se clasificara como TTS o text-to-audio y se incorporara a la comparacion modular, no a la categoria S2S nativa.
 
 ## 3. Objetivo general
 
-Diseñar y aplicar una metodologia reproducible para comparar una linea base local con Ollama, una variante modular con Transformers y TTS alternativos, y un agente Speech-to-Speech basado en modelos abiertos, en un escenario comun de conversacion en espanol.
+Diseñar y aplicar una metodologia reproducible para comparar una linea base local con Ollama, una variante modular con Transformers y TTS alternativos, y candidatos de audio conversacional basados en modelos abiertos, en un escenario comun de conversacion en espanol.
 
 ## 4. Objetivos especificos
 
 1. Revisar las plataformas comerciales realtime como contexto del estado del arte.
-2. Seleccionar modelos abiertos para las arquitecturas STT-LLM-TTS, Transformers y S2S.
+2. Seleccionar modelos abiertos para las arquitecturas STT-LLM-TTS, Transformers y audio conversacional.
 3. Definir una arquitectura y un conjunto de tareas iguales para las tres alternativas.
 4. Implementar un cliente o adaptador comun para cada arquitectura y backend.
 5. Medir objetivamente latencia, calidad, estabilidad y consumo.
@@ -99,7 +115,7 @@ Que arquitectura abierta ofrece el mejor equilibrio entre calidad conversacional
 
 ### Preguntas secundarias
 
-- Que diferencias existen entre las soluciones Speech-to-Speech nativas y los pipelines STT-LLM-TTS?
+- Que diferencias existen entre los candidatos de audio conversacional y los pipelines STT-LLM-TTS?
 - Que arquitectura responde antes despues de que el usuario termina de hablar?
 - Como gestionan las diferentes arquitecturas las interrupciones y los cambios de turno?
 - Que impacto tiene la calidad de STT en la respuesta final del agente?
@@ -150,11 +166,25 @@ Las etiquetas de Ollama dependen de los modelos publicados y de la version insta
 
 ### Modelos abiertos para Speech-to-Speech
 
-- **Moshi de Kyutai**: candidato principal para el experimento audio-audio.
-- **Qwen2.5-Omni**: alternativa multimodal con capacidades de audio.
-- **GLM-4-Voice u otro modelo equivalente**: candidato adicional si cumple los requisitos.
+- **Fish Speech S2 Pro**: candidato de audio conversacional/TTS que debe validarse como audio-audio directo.
+- **Dia**: candidato de dialogo hablado que debe validarse en entrada, salida, español y streaming.
 
-La seleccion final debe considerar soporte para espanol, streaming, interrupciones, consumo de GPU, disponibilidad de pesos y licencias del codigo, los pesos, el codec y los modelos auxiliares.
+La seleccion final debe considerar soporte para espanol, entrada y salida de audio, streaming, interrupciones, consumo de GPU, disponibilidad de pesos y licencias del codigo, los pesos, el codec y los modelos auxiliares.
+
+### Frameworks y herramientas de orquestacion
+
+Los frameworks no son modelos S2S. Proporcionan transporte, captura, streaming, turn-taking, eventos y adaptadores para conectar modelos.
+
+| Framework o herramienta | Funcion en el TFM | Uso recomendado |
+|---|---|---|
+| **Pipecat** | Orquestacion de pipelines de voz en tiempo real | Comparar pipelines STT-LLM-TTS y conectar servicios o modelos locales |
+| **LiveKit Agents** | Transporte WebRTC, sesiones, turnos e interrupciones | Agente interactivo con navegador o servidor LiveKit |
+| **Hugging Face Transformers** | Carga y ejecucion directa de modelos compatibles | Experimento academico y control de tokenizer, dispositivo y generacion |
+| **Gradio** | Interfaz web para microfono, audio de salida y pruebas | Demo en Colab o Hugging Face Spaces |
+| **Python `asyncio`** | Orquestacion minima y control explicito del flujo | Prototipo reproducible por turnos sin framework realtime |
+| **SGLang o vLLM** | Servir modelos compatibles con GPU y streaming | Fase posterior si el candidato de audio admite ese runtime |
+
+La primera implementacion utilizara Python y, cuando se ejecute online, Gradio para la interfaz. Pipecat o LiveKit Agents se evaluaran en una fase posterior si se necesita streaming, interrupciones y transporte realtime.
 
 ## 7. Escenario comun de evaluacion
 

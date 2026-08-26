@@ -7,9 +7,9 @@ Proyecto del TFM para experimentar con agentes de voz usando una versión online
 - Python 3.12 (probado con Python 3.12.10)
 - Windows, macOS o Linux
 - Micrófono y altavoces
-- [Ollama](https://ollama.com/) para la versión local
-- Una cuenta y credenciales de los servicios online para la versión basada en LiveKit
+- [Ollama](https://ollama.com/) para el pipeline local modular
 - El modelo de voz Piper incluido en `models/piper/`, o una copia descargada localmente
+- Una GPU CUDA es recomendable para los modelos S2S; el entorno actual `voiceagent` usa PyTorch CPU
 
 ## Instalación
 
@@ -31,12 +31,60 @@ En macOS o Linux:
 source .venv/bin/activate
 ```
 
-Instala las dependencias:
+Instala primero la base común:
 
 ```bash
 python -m pip install --upgrade pip
-python -m pip install livekit livekit-agents livekit-plugins-elevenlabs livekit-plugins-openai livekit-plugins-silero python-dotenv sounddevice soundfile piper-tts faster-whisper torch torchaudio jupyter ipykernel
+python -m pip install torch torchaudio sounddevice soundfile numpy requests python-dotenv jupyter ipykernel
 ```
+
+En Windows, si usas el entorno incluido en este proyecto, ejecuta los comandos anteriores con `voiceagent\Scripts\python.exe` o activa antes `voiceagent`.
+
+### Pipeline local modular
+
+Para `faster-whisper`, Silero VAD, Ollama y Piper:
+
+```powershell
+python -m pip install faster-whisper silero-vad piper-tts
+```
+
+Instala Ollama aparte y descarga el modelo local:
+
+```powershell
+ollama pull qwen2.5:3b
+```
+
+El pipeline modular no es un modelo Speech-to-Speech nativo: utiliza `STT -> LLM -> TTS`.
+
+### Qwen2.5-Omni-3B
+
+Para el notebook `speech-to-speech/Speech_to_Speech_Qwen2.5_Omni_3B.ipynb` instala las dependencias open source:
+
+```powershell
+python -m pip install transformers accelerate soundfile qwen-omni-utils audioread
+```
+
+El modelo se descargará de Hugging Face la primera vez que se ejecute la celda de carga. No se necesitan claves ni una cuenta de pago. Se recomienda una GPU CUDA con memoria suficiente; en CPU la inferencia puede ser demasiado lenta o no viable.
+
+### MiniCPM-o 4.5
+
+El notebook [Speech_to_Speech_MiniCPM_o_4_5.ipynb](speech-to-speech/Speech_to_Speech_MiniCPM_o_4_5.ipynb) usa la API oficial de Transformers. Para conversación hablada, instala las versiones recomendadas por la model card:
+
+```powershell
+python -m pip install "setuptools<70" "transformers==4.51.0" accelerate "torch>=2.3.0,<=2.8.0" "torchaudio<=2.8.0" "minicpmo-utils[all]>=1.0.5" librosa soundfile
+```
+
+El modelo `openbmb/MiniCPM-o-4_5` y sus pesos se descargan desde Hugging Face durante la primera ejecución. Esta opción es local y no cobra por petición, pero la inferencia PyTorch requiere preferiblemente una GPU Nvidia con memoria suficiente. Para CPU o equipos con menos memoria, revisa las variantes cuantizadas y las instrucciones oficiales de `llama.cpp` u Ollama.
+
+### Servicios online opcionales
+
+Solo son necesarios para los notebooks basados en LiveKit y proveedores externos. No forman parte de las implementaciones open source locales:
+
+```powershell
+python -m pip install livekit livekit-agents livekit-plugins-elevenlabs livekit-plugins-openai livekit-plugins-silero
+```
+
+Estos servicios pueden requerir cuentas, credenciales y pago por uso. No los instales si únicamente vas a ejecutar el pipeline local, Qwen2.5-Omni o MiniCPM-o.
 
 Si se van a ejecutar los notebooks, registra el entorno como kernel de Jupyter:
 

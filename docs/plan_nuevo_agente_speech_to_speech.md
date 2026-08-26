@@ -238,15 +238,15 @@ CSM requiere una GPU compatible con CUDA y el acceso a sus modelos de Hugging Fa
 
 Se propone crear el nuevo notebook con una implementación S2S principal, una línea base modular y referencias de comparación:
 
-### Implementacion principal: referencia comercial
+### Implementacion principal: Qwen2.5-Omni open source
 
-Usar `OpenAI Realtime API` con WebRTC o LiveKit. Esta fase permite comprobar rapidamente:
+Usar `Qwen/Qwen2.5-Omni-3B` mediante Transformers y una inferencia local por turnos con archivos WAV. Esta fase permite comprobar de forma autocontenida:
 
 - Latencia de respuesta.
 - Calidad de la conversacion.
 - Interrupciones.
 - Deteccion de turnos.
-- Diferencia frente al pipeline actual.
+- Diferencia frente al pipeline actual sin depender de un servicio de pago.
 
 ### Linea base local: pipeline modular
 
@@ -260,7 +260,7 @@ Esta linea base permite medir cuanto se aproxima la experiencia local a la opcio
 
 ### Experimento open source S2S: Qwen2.5-Omni
 
-Qwen2.5-Omni-3B se utilizara como primera implementación S2S nativa en Colab. Si la GPU permite una variante mayor, se probara Qwen2.5-Omni-7B cuantizado. Se compararan latencia, calidad en español, respuesta textual y hablada, estabilidad y consumo con el pipeline modular.
+Qwen2.5-Omni-3B se utilizara como primera implementación S2S nativa en local. Si la GPU permite una variante mayor, se probara Qwen2.5-Omni-7B cuantizado. Se compararan latencia, calidad en español, respuesta textual y hablada, estabilidad y consumo con el pipeline modular.
 
 Moshi se mantendra como referencia de S2S full-duplex y baja latencia, pero su evaluación en español quedara condicionada a una validación lingüística inicial. GLM-4-Voice se mantendra como referencia avanzada para chino e ingles.
 
@@ -268,13 +268,12 @@ Moshi se mantendra como referencia de S2S full-duplex y baja latencia, pero su e
 
 Fish Audio S2 Pro y CSM-1B se evaluaran como backends de síntesis contextual dentro del pipeline modular. No se utilizaran para afirmar que se ha construido un agente S2S nativo.
 
-La recomendacion inicial es:
+La recomendacion open source inicial es:
 
 ```text
-Prototipo comercial: OpenAI Realtime API + LiveKit
-Linea base local: faster-whisper + Ollama + Piper/Kokoro
 Experimento S2S nativo principal: Qwen2.5-Omni-3B
 Experimento S2S nativo ampliado: Qwen2.5-Omni-7B cuantizado
+Linea base local: faster-whisper + Ollama + Piper/Kokoro
 Referencia S2S full-duplex: Moshi
 TTS avanzado: Fish Audio S2 Pro o CSM-1B
 ```
@@ -308,7 +307,7 @@ Nombre sugerido: `Speech_to_Speech_Realtime_Agent.ipynb`
 
 ### Seccion 4: Conexion con el modelo
 
-- Inicializar la API realtime comercial como flujo principal.
+- Inicializar Qwen2.5-Omni como flujo S2S open source principal.
 - Mantener una implementacion de referencia con el pipeline local modular.
 - Probar Qwen2.5-Omni como flujo S2S nativo principal.
 - Mantener Moshi y GLM-4-Voice como referencias experimentales segun soporte linguistico y hardware.

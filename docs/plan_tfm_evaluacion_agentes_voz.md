@@ -12,6 +12,8 @@ La comparativa se realizara utilizando modelos y herramientas open source o con 
 
 Ya se ha probado una primera version local del pipeline `Speech-to-Text-to-Speech` con `faster-whisper`, Ollama y Piper. Esta implementacion servira como linea base del estudio. El siguiente paso sera seleccionar e integrar candidatos de audio conversacional bajo condiciones comparables.
 
+El estudio distinguira dos entornos de ejecucion. La linea base con Ollama se mantendra en el ordenador local para medir una configuracion reproducible y privada. Los modelos S2S y los modelos Transformer de mayor tamaño se evaluaran principalmente en Google Colab con CUDA, registrando en cada ejecución el tipo de GPU, la memoria disponible, la versión de CUDA, la versión de PyTorch y el tiempo de carga. Los resultados de hardware diferente no se presentaran como una comparación pura de modelos sin declarar esta diferencia.
+
 Como nueva arquitectura experimental se establece un pipeline modular ejecutado mediante un orquestador sencillo en Python:
 
 ```text
@@ -74,10 +76,7 @@ Esta categoria se investigara para determinar si el modelo recibe audio y genera
 Microfono -> transporte o interfaz -> modelo de audio -> altavoces
 ```
 
-Los candidatos iniciales son:
-
-- **Fish Speech S2 Pro**: candidato de audio conversacional y TTS multilingue. Debe verificarse si la version seleccionada admite audio de usuario como entrada conversacional, o si funciona como TTS condicionado por texto.
-- **Dia**: candidato para generacion de dialogo hablado. Debe verificarse el formato de entrada, porque la disponibilidad de audio-audio directo, soporte de español y funcionamiento en streaming pueden depender de la implementacion concreta.
+Los candidatos iniciales son Qwen2.5-Omni, Moshi y GLM-4-Voice, junto con Fish Audio S2 Pro y CSM-1B como referencias TTS contextuales. Dia se mantendra como candidato exploratorio hasta verificar su formato de entrada, salida, soporte de español y funcionamiento en streaming.
 
 No se afirmara a priori que estos sean los unicos modelos S2S open source ni que ambos realicen conversión directa audio-audio. El plan registrara para cada candidato si cumple realmente estas condiciones:
 
@@ -145,6 +144,35 @@ Silero VAD -> faster-whisper -> Ollama -> Piper o Kokoro
 
 Esta linea base no debe presentarse como Speech-to-Speech nativo. Su funcion sera servir como referencia de coste, privacidad, control y rendimiento local.
 
+### Posibilidades de pipeline STT-LLM-TTS ordenadas por eficiencia
+
+En esta tabla, eficiencia significa principalmente menor latencia y menor consumo de CPU, RAM y GPU, manteniendo una calidad razonable en español. Las configuraciones no son S2S nativas; se incluyen como líneas base y alternativas modulares.
+
+| Nivel | STT | LLM | TTS | Hardware orientativo | Eficiencia | Calidad esperada | Uso recomendado |
+|---|---|---|---|---|---|---|---|
+| 1. Muy ligero | `faster-whisper tiny` | `llama3.2:1b` con Ollama | Piper | CPU y poca RAM | Muy alta | Baja-media | Prueba mínima y equipos limitados |
+| 2. Ligero | `faster-whisper base` | Qwen2.5 1.5B | Piper | CPU | Alta | Media | Prototipo local sencillo |
+| 3. Equilibrado local | `faster-whisper base` | `qwen2.5:3b` con Ollama | Piper | CPU y 8-16 GB de RAM | Media-alta | Media-alta | Opcion recomendada para el ordenador actual |
+| 4. Mejor reconocimiento | `faster-whisper small` | `qwen2.5:3b` con Ollama | Piper | CPU potente o GPU | Media | Alta en reconocimiento | Español, ruido y frases complejas |
+| 5. Mejor LLM local | `faster-whisper base` | Qwen2.5-7B-Instruct | Piper | GPU de 16-24 GB | Media | Alta | Comparacion academica de modelos |
+| 6. GPU equilibrada | `faster-whisper small` en CUDA | Qwen2.5-7B-Instruct cuantizado | Piper | T4, L4 o superior | Alta en GPU | Alta | Experimento principal en Colab |
+| 7. TTS mas natural | `faster-whisper small` | Qwen 3B o 7B | Fish Audio S2 Pro | GPU de al menos 24 GB | Media | Muy alta en voz | Comparar Piper con TTS avanzado |
+| 8. Pipeline realtime | STT por streaming | LLM por streaming | TTS por streaming | GPU y orquestador realtime | Alta en interacción | Alta | Latencia, turnos e interrupciones |
+
+La configuración recomendada para la línea base es:
+
+```text
+faster-whisper base -> Ollama qwen2.5:3b -> Piper
+```
+
+La configuración recomendada para Colab es:
+
+```text
+faster-whisper small -> Qwen2.5-7B-Instruct cuantizado -> Piper
+```
+
+Fish Audio S2 Pro se comparara como backend TTS avanzado, no como modelo S2S nativo.
+
 ### Modelos para comparar Ollama y Transformers
 
 La comparacion se realizara en dos niveles:
@@ -166,10 +194,22 @@ Las etiquetas de Ollama dependen de los modelos publicados y de la version insta
 
 ### Modelos abiertos para Speech-to-Speech
 
-- **Fish Speech S2 Pro**: candidato de audio conversacional/TTS que debe validarse como audio-audio directo.
-- **Dia**: candidato de dialogo hablado que debe validarse en entrada, salida, español y streaming.
+| Opcion | Entrada y salida | Idiomas documentados | Tiempo real | GPU orientativa | Papel en el TFM |
+|---|---|---|---|---|---|
+| Qwen2.5-Omni-3B | Audio, texto, imagen o video -> texto y audio | Multilingue, incluido español | Si, streaming | Al menos 18-22 GB teoricos en BF16 | Primera opcion S2S en Colab |
+| Qwen2.5-Omni-7B GPTQ/AWQ | Audio y texto -> texto y audio | Multilingue, incluido español | Si, streaming | Aproximadamente 12-18 GB teoricos según variante | Ampliacion para GPU limitada |
+| Qwen2.5-Omni-7B BF16 | Audio y texto -> texto y audio | Multilingue, incluido español | Si, streaming | Aproximadamente 31 GB teoricos; mas en la practica | No adecuada para T4 de 16 GB |
+| Moshi / Moshiko | Audio del usuario -> audio del agente y texto auxiliar | Principalmente ingles | Si, full-duplex | Aproximadamente 24 GB | Referencia S2S y de latencia |
+| GLM-4-Voice-9B | Voz -> voz y texto | Chino e ingles | Si | CUDA; existe modo int4 | Referencia avanzada, no principal para español |
+| CSM-1B | Texto y contexto de audio -> audio | Principalmente ingles | Limitado | GPU CUDA | Generador contextual, no S2S completo |
+| Fish Audio S2 Pro | Texto y audio de referencia -> audio | Multilingue, incluido español | Depende del servidor | Al menos 24 GB recomendados | TTS avanzado, no S2S conversacional |
+| Dia | Debe verificarse la entrada y salida exactas | Debe verificarse | Debe verificarse | Debe verificarse | Candidato exploratorio pendiente de validación |
+
+Qwen2.5-Omni sera el candidato S2S nativo principal para español. Moshi y GLM-4-Voice se estudiaran como referencias, condicionadas por sus limitaciones lingüísticas. CSM y Fish Audio S2 Pro se evaluaran como TTS contextual, no como S2S nativo. Dia se mantendra únicamente como candidato exploratorio hasta verificar su entrada, salida, idiomas, streaming y licencia.
 
 La seleccion final debe considerar soporte para espanol, entrada y salida de audio, streaming, interrupciones, consumo de GPU, disponibilidad de pesos y licencias del codigo, los pesos, el codec y los modelos auxiliares.
+
+La comparación principal se realizará en español. Se podrán añadir inglés y portugués como idiomas secundarios, siempre que exista un STT y un TTS compatibles y que el modelo S2S declare soporte suficiente. Los resultados de idiomas secundarios se analizarán por separado y no se mezclarán en una única media con los resultados en español.
 
 ### Frameworks y herramientas de orquestacion
 
@@ -216,7 +256,7 @@ Cada prueba debe ejecutarse varias veces y con las mismas condiciones de red y h
 
 ## 8. Metricas objetivas
 
-### 7.1 Latencia
+### 8.1 Latencia
 
 Registrar al menos:
 
@@ -229,7 +269,7 @@ Registrar al menos:
 
 Se deben guardar media, mediana, percentil 95 y desviacion estandar. La mediana representa mejor una conversacion habitual y el percentil 95 permite observar casos lentos.
 
-### 7.2 Calidad del reconocimiento de voz
+### 8.2 Calidad del reconocimiento de voz
 
 - Word Error Rate (WER), si se dispone de una transcripcion de referencia.
 - Character Error Rate (CER) para nombres y palabras dificiles.
@@ -238,7 +278,7 @@ Se deben guardar media, mediana, percentil 95 y desviacion estandar. La mediana 
 
 La transcripcion de referencia debe revisarse manualmente y conservarse junto con el identificador de cada prueba.
 
-### 7.3 Calidad de la respuesta
+### 8.3 Calidad de la respuesta
 
 - Correccion de la respuesta.
 - Relevancia.
@@ -250,7 +290,7 @@ La transcripcion de referencia debe revisarse manualmente y conservarse junto co
 
 Se puede utilizar una rubrica de 1 a 5 puntos por criterio. Cuando se utilice evaluacion automatica con un LLM, debe complementarse con una muestra evaluada por personas y documentarse el posible sesgo.
 
-### 7.4 Calidad de voz y conversacion
+### 8.4 Calidad de voz y conversacion
 
 Evaluar mediante una encuesta controlada:
 
@@ -265,7 +305,7 @@ Evaluar mediante una encuesta controlada:
 
 Se puede utilizar una escala Likert de 1 a 5 y calcular media, mediana e intervalo de confianza cuando el numero de participantes lo permita.
 
-### 7.5 Coste y recursos
+### 8.5 Coste y recursos
 
 Para los pipelines open source se registrara:
 
@@ -277,7 +317,7 @@ Para los pipelines open source se registrara:
 
 Para las plataformas comerciales se documentara solo de forma teorica el coste por minuto, tokens, audio o sesiones, segun corresponda. Los precios se anotaran con moneda, plan, fecha de consulta y URL de la documentacion oficial. No se utilizaran para construir los resultados experimentales principales.
 
-### 7.6 Operacion y privacidad
+### 8.6 Operacion y privacidad
 
 - Tiempo de configuracion.
 - Complejidad de la integracion.
@@ -291,12 +331,47 @@ Para las plataformas comerciales se documentara solo de forma teorica el coste p
 - Politicas de retencion y tratamiento de datos.
 - Posibilidad de eliminar o exportar datos.
 
+## 8.7 Agregacion de resultados
+
+La unidad basica de análisis será una ejecución completa de un escenario y una configuración. Cada configuración se ejecutará una vez como calentamiento y, después, al menos cinco veces válidas por escenario. Las ejecuciones de calentamiento no entrarán en los resultados.
+
+Para cada métrica numérica se registrarán:
+
+- Número de ejecuciones válidas.
+- Media aritmética.
+- Mediana.
+- Desviación estándar.
+- Percentil 95.
+- Mínimo y máximo como información complementaria.
+
+La media se calculará sobre las ejecuciones válidas de cada combinación de arquitectura, modelo, idioma, tarea y entorno. No se mezclaran en una misma media resultados de local y Colab, GPU diferentes, idiomas diferentes ni configuraciones con distinto número de repeticiones. Para muestras subjetivas se informará también el número de evaluadores, la media, la mediana y la dispersión de las puntuaciones Likert.
+
+Las latencias se medirán en segundos con `time.perf_counter_ns()` y se definirán mediante eventos comunes. Como mínimo se guardarán:
+
+```text
+fin_intervencion_usuario
+inicio_primer_audio
+fin_audio_respuesta
+```
+
+De estos eventos se obtendrán:
+
+```text
+TTFA = inicio_primer_audio - fin_intervencion_usuario
+tiempo_total = fin_audio_respuesta - fin_intervencion_usuario
+```
+
+En el pipeline modular se guardarán además los tiempos de STT, LLM y TTS. En un modelo S2S nativo se guardarán los eventos equivalentes que proporcione su API. Cuando una API no permita observar un evento, se anotará como no disponible y no se estimará de forma artificial.
+
 ## 9. Diseno experimental
 
 ### Variables independientes
 
 - Plataforma o proveedor.
 - Tipo de arquitectura: S2S nativa o pipeline.
+- Entorno de ejecución: local con CPU, local con GPU o Google Colab con CUDA.
+- Idioma de la prueba: español como principal; inglés y portugués como secundarios si son viables.
+- Modelo, versión, cuantización y backend TTS.
 - Tipo de tarea.
 - Duracion de la conversacion.
 - Presencia o ausencia de ruido.
@@ -305,6 +380,7 @@ Para las plataformas comerciales se documentara solo de forma teorica el coste p
 ### Variables dependientes
 
 - Latencia.
+- TTFA y tiempo hasta la respuesta completa.
 - WER y CER.
 - Calidad de respuesta.
 - Naturalidad percibida.
@@ -428,8 +504,10 @@ Cada ejecucion debe producir un registro con:
 ### Fase 2: Definicion del protocolo
 
 - Seleccionar como minimo un pipeline modular y un candidato S2S abierto.
+- Fijar la separación entre pruebas locales y pruebas en Colab/CUDA.
+- Fijar español como idioma principal y los idiomas secundarios que sean viables.
 - Fijar tareas, frases y condiciones de prueba.
-- Definir metricas y criterios de exito.
+- Definir eventos de latencia, métricas, número de repeticiones y método de agregación.
 - Diseñar el esquema de datos de las mediciones.
 
 **Resultado:** protocolo experimental aprobado antes de medir.
@@ -497,7 +575,9 @@ El TFM se considerara completo si:
 - Se comparan al menos un pipeline STT-LLM-TTS y un pipeline S2S open source bajo condiciones equivalentes.
 - Existe una interfaz comun o un procedimiento comun de ejecucion.
 - Cada resultado incluye latencia, calidad, consumo y condiciones de la prueba.
-- Se reportan media, mediana y percentil 95 de las latencias.
+- Se reportan media, mediana, desviación estándar y percentil 95 de las latencias por configuración, idioma y entorno.
+- Se distinguen los resultados de ejecución local y Google Colab/CUDA.
+- Se indica el idioma principal y se justifican los idiomas secundarios incluidos o excluidos.
 - Se mide al menos una metrica de reconocimiento para el pipeline modular y una metrica de calidad conversacional para ambas arquitecturas.
 - Se prueban las interrupciones y los errores de conexion.
 - Se incluye una discusion de privacidad, licencias y dependencia del proveedor.
